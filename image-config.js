@@ -92,7 +92,7 @@ window.portfolioImages = {
       },
       // Replace with your map, with the building centered. zoom: 1 = no zoom.
       map: {
-        image: 'images/map1.webp',
+        image: 'images/saltmap.svg',
         zoom: 120,
         statement: 'How do we understand the existing stage?'
       }
