@@ -5,6 +5,14 @@ const identity = document.querySelector('.identity');
 
 
 const root = document.documentElement;
+const configuredNameSize = Number(images.nameFontSize ?? 4.2);
+const nameFontSize = Number.isFinite(configuredNameSize) && configuredNameSize > 0 ? configuredNameSize : 4.2;
+root.style.setProperty('--name-font-size', `${nameFontSize}vw`);
+const configuredGrayscale = Number(images.stripBlackAndWhiteStrength ?? 1);
+const stripGrayscale = Number.isFinite(configuredGrayscale) ? Math.min(1, Math.max(0, configuredGrayscale)) : 1;
+const configuredFilmFeather = Number(images.filmRevealFeather ?? 120);
+const filmFeather = Number.isFinite(configuredFilmFeather) ? Math.max(0, configuredFilmFeather) : 120;
+root.style.setProperty('--strip-grayscale', images.stripBlackAndWhite === false ? '0' : String(stripGrayscale));
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const clamp = value => Math.min(1, Math.max(0, value));
 const ease = value => { const t = clamp(value); return t * t * (3 - 2 * t); };
@@ -25,7 +33,7 @@ function applyTitleFace(index) {
   if (titleStyles[index]) Object.assign(identity.style, titleStyles[index]);
 }
 function measureTitleFaces() {
-  const size = innerWidth * .045;
+  const size = innerWidth * nameFontSize / 100;
   const canvas = document.createElement('canvas').getContext('2d');
   const probe = document.createElement('span');
   probe.textContent = identity.textContent;
@@ -108,11 +116,19 @@ function updateScroll() {
   const focus = ease(scrollScreens / .2);
   root.style.setProperty('--strip-blur', `${reducedMotion.matches ? 0 : 14 * (1 - focus)}px`);
   const videoIn = ease((progress - .62) / .32);
-  root.style.setProperty('--video-reveal', `${(1 - videoIn) * 100}%`);
+  // Grow the feather from zero; smooth alpha stops avoid a visible seam.
+  const featherWidth = filmFeather * ease(videoIn / .8);
+  const filmEdge = screenHeight - videoIn * (screenHeight + featherWidth);
+  const featherStops = [0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1].map(position => {
+    // Smootherstep has flat slopes at both ends of the blend.
+    const alpha = position ** 3 * (position * (position * 6 - 15) + 10);
+    return `rgba(0,0,0,${alpha}) ${filmEdge + position * featherWidth}px`;
+  });
+  root.style.setProperty('--film-mask', `linear-gradient(to bottom, ${featherStops.join(',')})`);
   identity.style.opacity = reducedMotion.matches || titleRevealed ? '1' : '0';
   // Stop cycling as the rising film reaches the lower edge of the title.
   // Use the Helvetica line height so changing fonts cannot toggle this boundary.
-  const titleBottom = screenHeight * .5 + window.innerWidth * .045 * 1.05 / 2;
+  const titleBottom = screenHeight * .5 + window.innerWidth * nameFontSize / 100 * 1.05 / 2;
   const filmTouchesTitle = screenHeight * (1 - videoIn) <= titleBottom;
   setFontCycling(titleRevealed && !filmTouchesTitle && !reducedMotion.matches && !document.hidden);
   // Move toward the bottom only as the pinned stage starts leaving the viewport.
@@ -254,12 +270,20 @@ portfolioProjects.forEach((project, index) => {
   if (project.beforeMapImages?.length) {
     const insert = make('div', 'chapter-insert');
     insert.setAttribute('aria-label', `${title} — additional images`);
-    project.beforeMapImages.slice(0, 2).forEach((src, imageIndex) => {
+    const hasCopy = project.beforeMapText?.length > 0;
+    const insertContent = hasCopy ? make('div', 'insert-editorial-content') : insert;
+    if (hasCopy) insert.classList.add('has-editorial-copy');
+    project.beforeMapImages.slice(0, hasCopy ? 1 : 2).forEach((src, imageIndex) => {
       const figure = make('figure');
       figure.append(projectImage(src, src === 'images/black.svg' ? `Placeholder ${imageIndex + 1}` : `${title} — additional image ${imageIndex + 1}`));
       figure.append(make('figcaption', 'insert-caption', project.beforeMapCaptions?.[imageIndex] || ''));
-      insert.append(figure);
+      insertContent.append(figure);
     });
+    if (hasCopy) {
+      const copy = make('div', 'insert-editorial-copy');
+      project.beforeMapText.forEach(text => copy.append(make('p', '', text)));
+      insertContent.append(copy); insert.append(insertContent);
+    }
     addDrawingOutline(insert); section.append(insert);
   }
   if (project.map?.image) {
@@ -303,7 +327,9 @@ portfolioProjects.forEach((project, index) => {
     matrix.append(body); matrixScroll.append(matrix);
     const explanation = make('div', 'mapping-reading-copy');
     explanation.append(make('h3', '', 'reading the existing stage'), make('p', '', 'Rather than documenting buildings as isolated objects, the street was read through actions and spatial conditions. Each location paired verbs such as swap, loan, divide, and split with material, immaterial, surface, space, action, and cycle. This method revealed hidden performances embedded within everyday urban life, transforming observation into spatial strategy.'));
-    reading.append(matrixScroll, explanation); section.append(reading);
+    reading.append(matrixScroll, explanation);
+    const mappingSheet = make('div', 'mapping-sheet');
+    mappingSheet.style.setProperty('--mapping-label-size', `${Math.max(8, Number(project.mapping.labelFontSize) || 16)}px`);
     const mappingScene = make('div', 'mapping-scene');
     const mapping = make('section', 'mapping-strip');
     mapping.setAttribute('aria-label', `${title} — site analysis`);
@@ -366,7 +392,94 @@ portfolioProjects.forEach((project, index) => {
     document.addEventListener('visibilitychange', sync);
     const mappingGroup = make('div', 'mapping-group');
     mappingGroup.append(mapping, playback);
-    mappingScene.append(mappingGroup); section.append(mappingScene);
+    mappingScene.append(mappingGroup);
+    mappingSheet.append(reading, mappingScene);
+    addDrawingOutline(mappingSheet); section.append(mappingSheet);
+  }
+  if (project.spatialStudy?.enabled) {
+    const settings = project.spatialStudy;
+    const sheet = make('section', 'spatial-study');
+    sheet.setAttribute('aria-label', `${title} — spatial study`);
+    sheet.style.setProperty('--study-height-scale', String(Math.max(1, Number(settings.heightScale) || 1.2)));
+    sheet.style.setProperty('--study-red', settings.lineColor || '#761d1c');
+    sheet.style.setProperty('--study-hover-duration', `${Math.max(.2, Number(settings.hoverDuration) || 1.8)}s`);
+    const canvas = make('div', 'study-canvas');
+    const ns = 'http://www.w3.org/2000/svg';
+    const connectors = document.createElementNS(ns, 'svg');
+    connectors.setAttribute('viewBox', '0 0 1000 800');
+    connectors.setAttribute('preserveAspectRatio', 'none');
+    connectors.setAttribute('class', 'study-connectors');
+    connectors.setAttribute('aria-hidden', 'true');
+    const arrowId = `study-arrow-${index}`;
+    connectors.innerHTML = `<defs><marker id="${arrowId}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1 1L7 4L1 7" fill="none" stroke="currentColor" stroke-width="1"/></marker></defs>`;
+    const connectorGap = Math.min(40, Math.max(4, Number(settings.connectorGap) || 16));
+    const startY = 648 - connectorGap;
+    const routes = [
+      `M100 ${startY}V70H740V${144-connectorGap}`,
+      `M300 ${startY}V430H125V120H450V${144-connectorGap}`,
+      `M500 ${startY}V460H350V${376+connectorGap}`,
+      `M700 ${startY}V440H525V${376+connectorGap}`,
+      `M900 ${startY}V330H${790+connectorGap}`
+    ];
+    const lines = routes.map((route, i) => {
+      const group = document.createElementNS(ns, 'g');
+      const line = document.createElementNS(ns, 'path');
+      line.setAttribute('d', route); line.setAttribute('class', 'study-connector');
+      line.setAttribute('marker-end', `url(#${arrowId})`);
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', String(100 + i * 200)); dot.setAttribute('cy', String(startY)); dot.setAttribute('r', '3');
+      group.append(line, dot); connectors.append(group); return group;
+    });
+    canvas.append(connectors);
+    const plan = make('figure', 'study-plan');
+    const planWidth = Math.min(90, Math.max(30, Number(settings.planWidth) || 82));
+    plan.style.width = `${planWidth}%`; plan.style.left = `${(100-planWidth)/2}%`;
+    plan.classList.toggle('is-placeholder', !settings.planImage);
+    plan.setAttribute('aria-label', 'Plan image placeholder');
+    if (settings.planImage) plan.append(projectImage(settings.planImage, `${title} — annotated plan`));
+    if (settings.planCrop && settings.planImage) {
+      const crop = settings.planCrop;
+      plan.style.aspectRatio = `${crop.sourceWidth} / ${crop.height}`;
+      plan.style.height = 'auto'; plan.style.overflow = 'hidden';
+      Object.assign(plan.firstElementChild.style, { position:'absolute', width:'100%', height:'auto', maxHeight:'none', top:`${-100*crop.top/crop.height}%`, left:'0', background:'#fff' });
+    }
+    canvas.append(plan);
+    const positionConnectors = () => {
+      const box = canvas.getBoundingClientRect(), art = plan.getBoundingClientRect();
+      if (!box.width || !box.height) return;
+      const top = (art.top-box.top)/box.height*800;
+      const bottom = (art.bottom-box.top)/box.height*800;
+      const right = (art.right-box.left)/box.width*1000;
+      const left = (art.left-box.left)/box.width*1000;
+      const paths = [
+        `M100 ${startY}V${bottom+120}H${Math.max(12,left-60)}V${top-70}H740V${top-connectorGap}`,
+        `M300 ${startY}V${bottom+65}H${left-35}V${top-35}H450V${top-connectorGap}`,
+        `M500 ${startY}V${bottom+95}H350V${bottom+connectorGap}`,
+        `M700 ${startY}V${bottom+75}H525V${bottom+connectorGap}`,
+        `M950 ${startY}V${bottom-30}H${right+connectorGap}`
+      ];
+      paths.forEach((path,i) => lines[i].querySelector('path').setAttribute('d',path));
+      // Keep the fifth starting point centered above its image slot.
+      lines[4].querySelector('path').setAttribute('d', `M900 ${startY}V${bottom+45}H950V${bottom-30}H${right+connectorGap}`);
+    };
+    new ResizeObserver(positionConnectors).observe(canvas);
+    new ResizeObserver(positionConnectors).observe(plan);
+    const detailRow = make('div', 'study-details');
+    Array.from({length:5}, (_,i) => {
+      const detail = make('figure', 'study-detail'); detail.tabIndex = 0;
+      detail.classList.toggle('is-placeholder', !settings.detailImages?.[i]);
+      detail.setAttribute('aria-label', `Spatial detail ${i+1}${settings.detailImages?.[i] ? '' : ' placeholder'}`);
+      if (settings.detailImages?.[i]) detail.append(projectImage(settings.detailImages[i], `${title} — spatial detail ${i+1}`));
+      const setActive = active => lines[i].classList.toggle('is-active', active);
+      detail.addEventListener('pointerenter', () => setActive(true));
+      detail.addEventListener('pointerleave', () => setActive(false));
+      detail.addEventListener('focus', () => setActive(true));
+      detail.addEventListener('blur', () => setActive(false));
+      detailRow.append(detail);
+    });
+    canvas.append(detailRow);
+    sheet.append(canvas, make('p', 'study-description', settings.description || ''));
+    addDrawingOutline(sheet); section.append(sheet);
   }
   if (gallery.length > 1) {
     const details = make('div', 'chapter-gallery');
@@ -486,15 +599,50 @@ document.addEventListener('visibilitychange', () => {
 });
 
 const workSection = document.querySelector('.work');
+const welcomeSettings = images.welcomeStrip ?? {};
+const menuAnimation = images.projectMenuAnimation ?? {};
+const welcomeText = welcomeSettings.text ?? 'Welcome to my portfolio, pick a project to proceed. Or just scroll.';
+const welcomeStrip = workSection.querySelector('.work-welcome');
+welcomeStrip.setAttribute('aria-label', welcomeText);
+welcomeStrip.querySelectorAll('span').forEach(span => { span.textContent = `${welcomeText}\u00a0\u00a0\u00a0`; });
+const menuValue = (value, fallback, minimum = 0) => Number.isFinite(Number(value)) ? Math.max(minimum, Number(value)) : fallback;
+const menuVariables = {
+  '--menu-bottom': `${Math.min(50,menuValue(menuAnimation.bottomOffset,4))}%`,
+  '--welcome-size': `${menuValue(welcomeSettings.fontSize,19,1)}px`,
+  '--welcome-top': `${menuValue(welcomeSettings.topOffset,82)}px`,
+  '--welcome-loop': `${menuValue(welcomeSettings.loopDuration,32,.1)}s`,
+  '--welcome-duration': `${menuValue(welcomeSettings.entranceDuration,2.2,.01)}s`,
+  '--welcome-delay': `${menuValue(welcomeSettings.entranceDelay,3.4)}s`,
+  '--menu-line-duration': `${menuValue(menuAnimation.lineDuration,3,.01)}s`,
+  '--menu-card-duration': `${menuValue(menuAnimation.cardDuration,1.7,.01)}s`,
+  '--menu-button-duration': `${menuValue(menuAnimation.buttonDuration,1.4,.01)}s`,
+  '--menu-button-delay': `${menuValue(menuAnimation.buttonDelay,2)}s`
+};
+Object.entries(menuVariables).forEach(([key,value]) => workSection.style.setProperty(key,value));
+workSection.querySelectorAll('.project-card').forEach((card,index) => {
+  card.style.setProperty('--card-delay', `${menuValue(menuAnimation.firstCardDelay,.15) + index * menuValue(menuAnimation.cardStagger,.5)}s`);
+});
 const mapScenes = [...document.querySelectorAll('.map-scroll')];
 let projectMotionFrame = null;
 function updateProjectMotion() {
   const viewport = innerHeight;
   // Begin only once the projects section itself reaches the top of the viewport.
-  const workProgress = clamp(-workSection.getBoundingClientRect().top / (viewport * .45));
-  const draw = ease(workProgress);
-  workSection.style.setProperty('--line-draw', reducedMotion.matches ? 1 : draw);
-  workSection.style.setProperty('--stations-opacity', reducedMotion.matches ? 1 : ease(workProgress / .5));
+  const workBounds = workSection.getBoundingClientRect();
+  if (workBounds.top <= 1 && workBounds.bottom > viewport * .5) workSection.classList.add('has-entered');
+  workSection.classList.toggle('is-on-screen', workBounds.top < viewport && workBounds.bottom > 0);
+  const menuProgress = reducedMotion.matches ? 1 : clamp(-workBounds.top / (viewport * menuValue(menuAnimation.scrollRevealDistance,.65,.01)));
+  const menuLength = Math.max(
+    menuValue(menuAnimation.lineDuration,3,.01),
+    menuValue(menuAnimation.firstCardDelay,.15) + 3 * menuValue(menuAnimation.cardStagger,.5) + menuValue(menuAnimation.cardDuration,1.7,.01),
+    menuValue(menuAnimation.buttonDelay,2) + menuValue(menuAnimation.buttonDuration,1.4,.01)
+  );
+  const menuTime = menuProgress * menuLength;
+  const reveal = (delay,duration) => reducedMotion.matches ? 1 : ease((menuTime-delay)/duration);
+  workSection.style.setProperty('--line-draw', reveal(0,menuValue(menuAnimation.lineDuration,3,.01)));
+  workSection.querySelectorAll('.project-card').forEach((card,index) => {
+    card.style.opacity = String(reveal(menuValue(menuAnimation.firstCardDelay,.15) + index * menuValue(menuAnimation.cardStagger,.5),menuValue(menuAnimation.cardDuration,1.7,.01)));
+  });
+  workSection.querySelector('.index-footer').style.opacity = String(reveal(menuValue(menuAnimation.buttonDelay,2),menuValue(menuAnimation.buttonDuration,1.4,.01)));
   root.style.setProperty('--viewport-width', `${document.documentElement.clientWidth}px`);
   let immersive = false;
   mapScenes.forEach(scene => {
