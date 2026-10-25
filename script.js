@@ -1,4 +1,8 @@
 const images = window.portfolioImages;
+const stairMenuLabel = document.querySelector('[data-stair-menu-label]');
+if (stairMenuLabel) stairMenuLabel.textContent = images.stairCalculator?.menuLabel || 'Stair calculator';
+const usefulLabel = document.querySelector('[data-useful-label]');
+if (usefulLabel) usefulLabel.textContent = images.stairCalculator?.groupLabel || 'Useful stuff';
 const intro = document.querySelector('.intro');
 const stage = document.querySelector('.intro-stage');
 const identity = document.querySelector('.identity');
@@ -76,7 +80,22 @@ Promise.all(titleFaces.map(face => document.fonts.load(`${face[2]} ${face[1]} 10
 window.addEventListener('resize', measureTitleFaces);
 
 
-document.querySelectorAll('[data-image]').forEach(image => { image.src = images[image.dataset.image]; });
+document.querySelectorAll('[data-image]').forEach(image => {
+  const source = images[image.dataset.image];
+  if (image.dataset.image === 'film' && /\.(mp4|webm)(?:[?#]|$)/i.test(source || '')) {
+    const video = document.createElement('video');
+    video.muted = true; video.defaultMuted = true; video.autoplay = true;
+    video.loop = images.filmPlayback?.loop !== false; video.playsInline = true;
+    video.preload = 'auto'; video.setAttribute('aria-label', images.filmPlayback?.label || 'Portfolio film');
+    video.src = source;
+    const speed = Number(images.filmPlayback?.speed ?? 1);
+    video.playbackRate = Number.isFinite(speed) ? Math.max(.25, Math.min(4, speed)) : 1;
+    image.replaceWith(video);
+    const play = () => video.play().catch(() => { video.controls = true; });
+    play();
+    document.addEventListener('visibilitychange', () => { if (document.hidden) video.pause(); else play(); });
+  } else image.src = source;
+});
 const stripTracks = [...document.querySelectorAll('.lane-track')];
 const groupedStrips = images.strips.every(Array.isArray);
 const uniqueStrips = groupedStrips ? [] : [...new Set(images.strips)];

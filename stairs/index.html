@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stair Studio — Find your rhythm</title>
+  <meta name="description" content="Explore stair proportions with an interactive visual calculator using 2r + b = 63 ± 2 cm.">
+  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="portfolio-theme.css"><script src="../image-config.js"></script>
+<link rel="stylesheet" href="../analytics.css"><script src="../analytics.js" defer></script></head>
+<body>
+  <header class="header"><a class="brand" href="./" aria-label="Stair Studio home"><svg width="30" height="28" viewBox="0 0 30 28" fill="none"><path d="M2 25V18H10V10H18V2H28" stroke="currentColor" stroke-width="2.5"/></svg>stair<span>studio</span></a><a class="portfolio-back" href="../index.html#work">← Back to portfolio</a><button class="text-button" id="reset">Reset <span>↺</span></button></header>
+  <main>
+    <div class="intro"><div><p class="eyebrow"><span></span> THE STAIR PROPORTION EXPLORER</p><h1>Find your rhythm.</h1><p class="subtitle">Two rises. One tread. A stair that feels right.</p></div><div class="formula"><span class="formula-label">THE BLONDEL FORMULA</span><div>2<span>r</span> + <span>b</span> = <strong>63</strong><small>± 2 cm</small></div><p>r = riser height <i>·</i> b = tread depth</p></div></div>
+    <div class="workspace">
+      <aside class="controls panel">
+        <div class="section-title"><span class="section-number">01</span><h2>Your space</h2><span class="unit-badge">cm</span></div>
+        <p class="section-description">Start with the dimensions you have.</p>
+        <label for="height">Floor-to-floor height <span>↕</span></label><div class="input-wrap"><input id="height" type="number" min="0" max="1200" step="1" value="280" inputmode="decimal"><span>cm</span></div><p class="hint">Finished lower floor to finished upper floor.</p>
+        <label for="length">Exact horizontal length <span>↔</span></label><div class="input-wrap"><input id="length" type="number" min="0" max="3000" step="1" value="450" inputmode="decimal"><span>cm</span></div><p class="hint">Fixed length from the first riser to the upper floor.</p>
+        <p class="dimension-hint"></p><button id="recommend" class="small-button" type="button" hidden>See recommended</button><p id="input-error" class="input-error" role="alert" hidden></p>
+        <div class="divider"></div>
+        <div class="section-title"><span class="section-number">02</span><h2>Explore the steps</h2></div>
+        <div class="count-line"><div><output id="count-value" for="count">16</output><span>risers</span></div><button id="best" class="small-button">Best fit <span>↗</span></button></div>
+        <input id="count" type="range" min="9" max="24" value="16" aria-label="Number of risers" aria-describedby="slider-hint">
+        <div class="range-labels"><span id="min-label">9 risers</span><span id="max-label">24 risers</span></div>
+        <p class="hint slider-hint" id="slider-hint">Both dimensions stay fixed. Slide to explore 2r + b; the target range is 61–65 cm.</p>
+        <div id="fit-box" class="fit-box"><span class="fit-icon" id="fit-icon">✓</span><div><strong id="fit-title">Fits your space</strong><p id="fit-detail">30 cm of horizontal space remaining.</p></div></div>
+      </aside>
+      <section class="visual panel" aria-label="Stair visualization">
+        <div class="visual-top"><div><span class="section-number">03</span><h2>Your stair, in perspective</h2></div><div class="view-switch" role="group" aria-label="Drawing view"><button class="active" id="view-3d" aria-pressed="true">Perspective</button><button id="view-side" aria-pressed="false">Side view</button></div></div>
+        <div class="drawing-wrap"><div class="drawing-tag"><span></span> LIVE PREVIEW</div><svg id="drawing" viewBox="0 0 900 490" role="img" aria-labelledby="drawing-title drawing-description"></svg><div class="drawing-caption"><span id="drawing-caption">16 risers / 15 treads</span><span>Proportional diagram · illustrative width</span></div></div>
+        <div class="metrics" aria-live="polite"><div><span>RISER HEIGHT <i>r</i></span><p><strong id="rise">17.5</strong><small>cm</small></p></div><div><span>TREAD DEPTH <i>b</i></span><p><strong id="tread">28.0</strong><small>cm</small></p></div><div><span>TOTAL RUN</span><p><strong id="run">420</strong><small>cm</small></p></div><div><span>PITCH ANGLE</span><p><strong id="angle">32.0</strong><small>°</small></p></div></div>
+      </section>
+    </div>
+    <section class="bottom-row"><div class="equation-check"><span class="check-label">FORMULA CHECK · TARGET 61–65 CM</span><p>2 × <strong id="math-rise">17.5</strong> + <strong id="math-tread">28.0</strong> <span>≈</span> <strong class="green" id="math-result">65 cm</strong><span class="check-round" id="math-check">✓</span></p><div id="run-check" class="run-check"></div></div><div class="note"><span class="note-symbol">i</span><p>The upper floor is the final step, so <strong>treads = risers − 1</strong>.<br>Best fit selects the result closest to 63 cm, prioritizing the 61–65 cm range. A proportion study; check local requirements before building.</p></div></section>
+  </main>
+  <footer><span>STAIR STUDIO</span><span>Thoughtful proportions, one step at a time.</span><span>2r + b = 63 ± 2 cm</span></footer>
+  <script src="calculator-app.js"></script><script src="portfolio-theme.js"></script>
+</body>
+</html>
+

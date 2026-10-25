@@ -1,6 +1,34 @@
 // Put your photos in the images folder, then change the filenames below.
 // Keep the quotes. JPG, PNG, WebP and SVG all work. No server is needed.
 window.portfolioImages = {
+  analytics: {
+    sectionUpdates: true,
+    sectionDwellSeconds: 2, // Section must occupy the screen centre for this long.
+    sectionCooldownSeconds: 10, // Minimum gap between section messages; latest section wins.
+    enabled: true,
+    endpoint: 'https://portfolio-events.bilgicoz.workers.dev/events',
+    reportSeconds: 60, // Minimum 30 seconds between periodic summaries.
+    idleSeconds: 60, // Stop counting active time after this many seconds without interaction.
+    visitorIdDays: 30, // Remember this consenting browser for up to this many days (1–365).
+    title: 'Optional visit statistics',
+    notice: 'May I collect your approximate country, device category, pages and areas viewed, active time, scroll depth and clicks? Reports go through Cloudflare to my private Discord channel. A random browser ID recognises returning visits for up to {days} days. No raw IP address is sent to Discord. Your choice is saved on this browser. Declining does not affect the website.',
+    allowText: 'Allow statistics',
+    declineText: 'No thanks',
+    settingsText: 'Privacy settings',
+    savedText: 'You can change your choice here at any time. Stopping collection does not delete reports already sent.',
+  },
+  stairCalculator: {
+    groupLabel: 'Useful stuff',
+    recommendLabel: 'See recommended',
+    recommendPrompt: 'See recommended dimensions',
+    dimensionHint: 'Set one dimension to 0 to get a suggestion.',
+    menuLabel: 'Stair calculator',
+    title: 'Stair calculator.',
+    subtitle: 'Explore risers, treads, and proportions.',
+    backLabel: '← Back to portfolio',
+    eyebrow: 'TOOLS / 01',
+    footerText: 'ÖZGÜN EGE BİLGİÇ / DESIGN TOOLS'
+  },
   // Project menu welcome strip. Sizes/offsets in pixels; durations in seconds (higher = slower).
   welcomeStrip: {
     text: 'welcome to my portfolio, pick a project to proceed. or just scroll.',
@@ -69,7 +97,8 @@ window.portfolioImages = {
   ],
   // Maximum feather width in pixels. The soft band grows as you scroll. 0 = sharp edge.
   filmRevealFeather: 340,
-  film: 'images/books_1.gif', // Still image until you have a video.
+  film: 'images/books.mp4', // MP4/WebM video or GIF/still image.
+  filmPlayback: { speed: 1, loop: true, label: 'Portfolio film' }, // Speed: 1 = normal, 0.5 = half speed.
   portrait: 'images/portrait.webp',
   // Four projects, in page order. Each gallery uses the matching strips group above.
   // image = timeline hover preview; introImage = large project-opening image.

@@ -1,0 +1,10 @@
+const settings = window.portfolioImages?.stairCalculator || {};
+const text = (selector, value) => { if (value) document.querySelector(selector).textContent = value; };
+text('h1', settings.title);
+text('.subtitle', settings.subtitle);
+text('.eyebrow', settings.eyebrow);
+text('.portfolio-back', settings.backLabel);
+text('footer > span:nth-child(2)', settings.footerText);
+document.title = `${settings.menuLabel || 'Stair calculator'} — Özgün Ege Bilgiç`;
+text('.dimension-hint', settings.dimensionHint);
+text('#recommend', settings.recommendLabel);

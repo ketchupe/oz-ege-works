@@ -1,0 +1,18 @@
+@font-face{font-family:Cascadia;src:url('../fonts/CascadiaCode.woff2') format('woff2');font-display:swap}
+:root{font-family:Cascadia,Consolas,monospace;color:#171717;background:#fff;--green:#982c31;--muted:#666;--line:#b5b5ae}
+body{background:#fff;color:#171717}h1{font-family:Helvetica,Arial,sans-serif;font-weight:700;color:#171717}h2,.formula>div,.count-line output,.metrics strong{font-family:Helvetica,Arial,sans-serif}
+.header{border-bottom:1px solid #171717}.brand,.brand span{color:#171717}.portfolio-back{color:#982c31;font-size:11px;text-decoration:none}.portfolio-back:hover{text-decoration:underline}
+.eyebrow,.section-number,.formula-label,.green,.check-label{color:#982c31}.eyebrow>span{background:#982c31}
+.panel{border:1px dashed #aaa9a2;border-radius:0;box-shadow:none}.input-wrap,.small-button,.unit-badge,.fit-box,.view-switch,.view-switch button,.equation-check,.note,.check-round{border-radius:0;box-shadow:none}
+.input-wrap{background:white;border-color:#aaa9a2}.input-wrap input{color:#171717}.input-wrap:focus-within{border-color:#982c31}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px dashed #982c31;outline-offset:4px}
+.small-button,.view-switch button{background:white;color:#171717;border:1px solid #171717}.small-button:hover,.view-switch button.active{background:#171717;color:white}
+.visual,.drawing-wrap{background:#fff}.drawing-wrap{background-image:linear-gradient(#982c3109 1px,transparent 1px),linear-gradient(90deg,#982c3109 1px,transparent 1px);background-size:24px 24px}
+.fit-box,.equation-check{background:#faf7f7;border:1px solid #982c3130;color:#171717}.fit-icon,.check-round{background:#982c31;color:white}.fit-box strong,.fit-box p,.run-check{color:#171717}
+.drawing-tag,.drawing-caption{color:#666}.drawing-tag>span{background:#982c31}.note{background:white}.note-symbol{color:#982c31;border-color:#982c31}footer{border-top:1px solid #171717;color:#666}
+@media(max-width:760px){.header{gap:12px}.brand{font-size:18px}.portfolio-back{font-size:9px}.header .text-button{font-size:11px}}
+/* Keep dimensions, results, and controls; remove decorative copy. */
+.subtitle,.eyebrow,.section-description,.hint,.drawing-tag,.drawing-caption>span:last-child,.formula-label,.header .brand,.note,.run-check,footer,.section-number{display:none}
+.header{height:70px}.intro{margin-bottom:24px}.intro h1{margin:0;font-size:38px}.formula p{color:#555}.drawing-wrap{min-height:340px}
+.dimension-hint{font-size:10px;line-height:1.5;color:#666;margin:14px 0}#recommend{margin:0 0 18px;padding:10px 14px;background:#171717;color:#fff}#recommend[hidden]{display:none}
+.fit-box{margin-top:20px}.bottom-row{grid-template-columns:1fr;margin-bottom:32px}.view-switch{background:#fff}.drawing-text{fill:#761d1c}
