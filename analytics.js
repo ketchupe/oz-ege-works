@@ -13,6 +13,7 @@
   let allowed = false, visit, visitor, returning = false, pageLoad, seconds = 0, depth = 0, areaTimes = {}, clicks = {};
   let last = performance.now(), interaction = last, sequence = 0, dirty = false;
   let candidate = null, dwell = 0, announced = null, lastSectionMessage = -Infinity;
+  let anonymous = false, anonymousTotals = {seconds:0,areas:{},clicks:{}};
   const device = /ipad|tablet/i.test(navigator.userAgent) ? 'tablet' : /mobi/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
   const panel = document.createElement('section'); panel.className = 'visit-consent'; panel.setAttribute('aria-label', c.title);
   const heading = document.createElement('h2'); heading.textContent = c.title;
@@ -20,11 +21,21 @@
   const saved = document.createElement('p'); saved.textContent = c.savedText;
   const yes = document.createElement('button'); yes.textContent = c.allowText;
   const no = document.createElement('button'); no.textContent = c.declineText;
+  const anon = document.createElement('button'); anon.textContent = c.anonymizeText || 'Anonymize';
+  const details = document.createElement('details');
+  const detailsLabel = document.createElement('summary'); detailsLabel.textContent = c.detailsText || 'More details';
+  details.append(detailsLabel,notice,saved,no);
   const settings = document.createElement('button'); settings.className = 'visit-settings'; settings.textContent = c.settingsText;
-  panel.append(heading,notice,saved,yes,no); document.body.append(panel,settings);
+  panel.append(heading,yes,anon,details); document.body.append(panel,settings);
   function reset() { seconds = 0; depth = 0; areaTimes = {}; clicks = {}; sequence = 0; dirty = false; last = interaction = performance.now(); candidate = announced = null; dwell = 0; lastSectionMessage = -Infinity; }
-  function start() {
+  function start(mode = 'yes') {
     reset();
+    anonymous = mode === 'anonymous'; anonymousTotals = {seconds:0,areas:{},clicks:{}};
+    if (anonymous) {
+      try { localStorage.removeItem(visitorKey); sessionStorage.removeItem(visitKey); } catch {}
+      visit = visitor = pageLoad = undefined;
+      allowed = true; dirty = true; report(); return;
+    }
     let browser, session;
     try { browser = JSON.parse(get('localStorage',visitorKey)); } catch {}
     try { session = JSON.parse(get('sessionStorage',visitKey)); } catch {}
@@ -41,13 +52,13 @@
   }
   function choose(value) {
     allowed = false; reset(); put('localStorage',key,value); panel.hidden = true;
-    if (value === 'yes') start();
+    if (value === 'yes' || value === 'anonymous') start(value);
     else { try { sessionStorage.removeItem(visitKey); localStorage.removeItem(visitorKey); } catch {} }
     settings.focus();
   }
-  yes.onclick = () => choose('yes'); no.onclick = () => choose('no');
+  yes.onclick = () => choose('yes'); anon.onclick = () => choose('anonymous'); no.onclick = () => choose('no');
   settings.onclick = () => { panel.hidden = !panel.hidden; if (!panel.hidden) yes.focus(); };
-  addEventListener('storage', e => { if (e.key === key) { allowed = false; reset(); if (e.newValue === 'yes') start(); panel.hidden = e.newValue !== null; } });
+  addEventListener('storage', e => { if (e.key === key) { allowed = false; reset(); if (['yes','anonymous'].includes(e.newValue)) start(e.newValue); panel.hidden = e.newValue !== null; } });
   function tick() {
     const now = performance.now();
     const elapsed = Math.min((now-last)/1000, 2); last = now;
@@ -75,11 +86,25 @@
     }
   }
   function send(payload) {
-    fetch(c.endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),credentials:'omit',referrerPolicy:'no-referrer',keepalive:true}).catch(()=>{});
+    if (anonymous) {
+      if (payload.event === 'section_enter') payload = {event:payload.event,target:payload.target,anonymous:true};
+      else {
+        const delta = (next,prev) => Object.fromEntries(Object.entries(next).map(([k,v])=>[k,Math.max(0,v-(prev[k] || 0))]).filter(([,v])=>v>0));
+        const totals = {seconds:payload.seconds,areas:payload.areas,clicks:{...payload.clicks}};
+        payload = {event:payload.event,target:payload.target,anonymous:true,seconds:Math.max(0,totals.seconds-anonymousTotals.seconds),areas:delta(totals.areas,anonymousTotals.areas),clicks:delta(totals.clicks,anonymousTotals.clicks)};
+        anonymousTotals = totals;
+      }
+    }
+    window.portfolioAnalyticsStatus = {state:'sending',event:payload.event};
+    fetch(c.endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),credentials:'omit',referrerPolicy:'no-referrer',keepalive:true})
+      .then(response => {
+        window.portfolioAnalyticsStatus = {state:response.ok?'delivered':'rejected',status:response.status,event:payload.event};
+        if (!response.ok) console.warn('Portfolio analytics delivery failed:',response.status,'Check the active Cloudflare Worker version and bindings.');
+      }).catch(()=>{ window.portfolioAnalyticsStatus = {state:'network-error',event:payload.event}; });
   }
   function report() {
     if (!allowed || !dirty) return;
-    put('sessionStorage',visitKey,JSON.stringify({id:visit,visitor,returning,last:Date.now()}));
+    if (!anonymous) put('sessionStorage',visitKey,JSON.stringify({id:visit,visitor,returning,last:Date.now()}));
     const payload = {event:'visit_summary',target:page,visit,visitor,returning,pageLoad,sequence:++sequence,device,seconds:Math.round(seconds),depth,
       areas:Object.fromEntries(Object.entries(areaTimes).map(([k,v])=>[k,Math.round(v)])),clicks};
     dirty = false;
@@ -105,5 +130,5 @@
   addEventListener('pagehide',report);
   setInterval(tick,1000); setInterval(report,Math.max(30,c.reportSeconds || 60)*1000);
   const choice = get('localStorage',key); panel.hidden = choice !== null;
-  if (choice === 'yes') start();
+  if (['yes','anonymous'].includes(choice)) start(choice);
 })();

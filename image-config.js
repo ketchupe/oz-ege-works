@@ -10,10 +10,12 @@ window.portfolioImages = {
     reportSeconds: 60, // Minimum 30 seconds between periodic summaries.
     idleSeconds: 60, // Stop counting active time after this many seconds without interaction.
     visitorIdDays: 30, // Remember this consenting browser for up to this many days (1–365).
-    title: 'Optional visit statistics',
-    notice: 'May I collect your approximate country, device category, pages and areas viewed, active time, scroll depth and clicks? Reports go through Cloudflare to my private Discord channel. A random browser ID recognises returning visits for up to {days} days. No raw IP address is sent to Discord. Your choice is saved on this browser. Declining does not affect the website.',
-    allowText: 'Allow statistics',
-    declineText: 'No thanks',
+    title: 'Optional analytics',
+    notice: 'Allow: pages, areas, active time, scroll depth, clicks, approximate country and device, with a random browser ID saved for {days} days to recognise returns. Anonymize: area and usage reports without visitor IDs, country or device; returning visits cannot be linked. Reports pass through Cloudflare to a private Discord channel. Cloudflare still processes connection IPs; raw IPs are not sent to Discord. Preferences use local storage, not cookies. Declining does not affect the site.',
+    allowText: 'Allow',
+    anonymizeText: 'Anonymize',
+    detailsText: 'More details',
+    declineText: 'Deny completely',
     settingsText: 'Privacy settings',
     savedText: 'You can change your choice here at any time. Stopping collection does not delete reports already sent.',
   },
