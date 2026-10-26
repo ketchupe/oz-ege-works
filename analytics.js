@@ -14,9 +14,11 @@
   let last = performance.now(), interaction = last, sequence = 0, dirty = false;
   let candidate = null, dwell = 0, announced = null, lastSectionMessage = -Infinity;
   let anonymous = false, anonymousTotals = {seconds:0,areas:{},clicks:{}};
+  let explicitAllow = false;
   const device = /ipad|tablet/i.test(navigator.userAgent) ? 'tablet' : /mobi/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
   const panel = document.createElement('section'); panel.className = 'visit-consent'; panel.setAttribute('aria-label', c.title);
   const heading = document.createElement('h2'); heading.textContent = c.title;
+  const shortNotice = document.createElement('p'); shortNotice.className = 'visit-small-print'; shortNotice.textContent = c.shortNotice || '';
   const notice = document.createElement('p'); notice.textContent = c.notice.replace('{days}',String(days));
   const saved = document.createElement('p'); saved.textContent = c.savedText;
   const yes = document.createElement('button'); yes.textContent = c.allowText;
@@ -26,21 +28,24 @@
   const detailsLabel = document.createElement('summary'); detailsLabel.textContent = c.detailsText || 'More details';
   details.append(detailsLabel,no);
   const settings = document.createElement('button'); settings.className = 'visit-settings'; settings.textContent = c.settingsText;
-  panel.append(heading,yes,anon,details); document.body.append(panel,settings);
+  panel.hidden = true;
+  panel.append(heading,shortNotice,yes,anon,details); document.body.append(panel,settings);
   function fadePrivacyControl() {
     const opening = document.getElementById('top');
     if (!opening) return;
     const distance = innerHeight * Math.max(.1, Number(c.privacyFadeScreens) || .6);
-    const opacity = Math.max(0, Math.min(1, opening.getBoundingClientRect().bottom / distance));
+    const opacity = Math.max(0, Math.min(1, 1-scrollY/distance));
     settings.style.opacity = String(opacity);
     settings.style.pointerEvents = opacity > .05 ? 'auto' : 'none';
+    if (opacity <= .05) panel.hidden = true;
   }
-  addEventListener('scroll',fadePrivacyControl,{passive:true});
+  addEventListener('scroll',()=>{ if (document.activeElement === settings) settings.blur(); fadePrivacyControl(); },{passive:true});
   addEventListener('resize',fadePrivacyControl);
   fadePrivacyControl();
   function reset() { seconds = 0; depth = 0; areaTimes = {}; clicks = {}; sequence = 0; dirty = false; last = interaction = performance.now(); candidate = announced = null; dwell = 0; lastSectionMessage = -Infinity; }
   function start(mode = 'yes') {
     reset();
+    explicitAllow = mode === 'yes';
     anonymous = mode === 'anonymous'; anonymousTotals = {seconds:0,areas:{},clicks:{}};
     if (anonymous) {
       try { localStorage.removeItem(visitorKey); sessionStorage.removeItem(visitKey); } catch {}
@@ -106,7 +111,7 @@
         anonymousTotals = totals;
       }
     }
-    if (!anonymous) payload.ipConsent = true;
+    if (!anonymous && explicitAllow) payload.ipConsent = true;
     window.portfolioAnalyticsStatus = {state:'sending',event:payload.event};
     fetch(c.endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),credentials:'omit',referrerPolicy:'no-referrer',keepalive:true})
       .then(response => {
@@ -141,6 +146,7 @@
   document.addEventListener('visibilitychange',()=>{if(document.hidden) report(); last=performance.now();});
   addEventListener('pagehide',report);
   setInterval(tick,1000); setInterval(report,Math.max(30,c.reportSeconds || 60)*1000);
-  const choice = get('localStorage',key); panel.hidden = choice !== null;
+  const choice = get('localStorage',key); panel.hidden = true;
   if (['yes','anonymous'].includes(choice)) start(choice);
+  else if (choice === null && c.defaultAllow === true) start('default');
 })();
