@@ -1,7 +1,7 @@
 (() => {
   const c = window.portfolioImages?.analytics;
   if (!c?.enabled || !['www.oz-ege.works','oz-ege.works','ketchupe.github.io'].includes(location.hostname)) return;
-  const key = 'portfolio-statistics-choice-v2';
+  const key = 'portfolio-statistics-choice-v3';
   const visitorKey = 'portfolio-browser-v1';
   const visitKey = 'portfolio-session-v2';
   const uuid = v => typeof v === 'string' && /^[a-f0-9-]{36}$/i.test(v);
@@ -24,9 +24,20 @@
   const anon = document.createElement('button'); anon.textContent = c.anonymizeText || 'Anonymize';
   const details = document.createElement('details');
   const detailsLabel = document.createElement('summary'); detailsLabel.textContent = c.detailsText || 'More details';
-  details.append(detailsLabel,notice,saved,no);
+  details.append(detailsLabel,no);
   const settings = document.createElement('button'); settings.className = 'visit-settings'; settings.textContent = c.settingsText;
   panel.append(heading,yes,anon,details); document.body.append(panel,settings);
+  function fadePrivacyControl() {
+    const opening = document.getElementById('top');
+    if (!opening) return;
+    const distance = innerHeight * Math.max(.1, Number(c.privacyFadeScreens) || .6);
+    const opacity = Math.max(0, Math.min(1, opening.getBoundingClientRect().bottom / distance));
+    settings.style.opacity = String(opacity);
+    settings.style.pointerEvents = opacity > .05 ? 'auto' : 'none';
+  }
+  addEventListener('scroll',fadePrivacyControl,{passive:true});
+  addEventListener('resize',fadePrivacyControl);
+  fadePrivacyControl();
   function reset() { seconds = 0; depth = 0; areaTimes = {}; clicks = {}; sequence = 0; dirty = false; last = interaction = performance.now(); candidate = announced = null; dwell = 0; lastSectionMessage = -Infinity; }
   function start(mode = 'yes') {
     reset();
@@ -95,6 +106,7 @@
         anonymousTotals = totals;
       }
     }
+    if (!anonymous) payload.ipConsent = true;
     window.portfolioAnalyticsStatus = {state:'sending',event:payload.event};
     fetch(c.endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),credentials:'omit',referrerPolicy:'no-referrer',keepalive:true})
       .then(response => {

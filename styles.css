@@ -258,6 +258,8 @@ body { font-family:var(--font-text); }
 .lane-three .lane-track { animation-duration:36s; animation-delay:-18s; }
 .lane-four .lane-track { animation-duration:36s; animation-delay:-27s; }
 .identity { transition:opacity 1.4s ease; text-shadow:0 1px 3px #0009,0 3px 18px #0005; }
+.identity a { pointer-events:auto; color:inherit; font:inherit; letter-spacing:inherit; text-decoration:none; }
+.identity a:hover,.identity a:focus-visible { text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:.12em; }
 
 /* Technical navigation: solid surface, hairline border, square geometry. */
 .quick-nav .nav-toggle {

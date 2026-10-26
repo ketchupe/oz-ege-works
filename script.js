@@ -145,6 +145,7 @@ function updateScroll() {
   });
   root.style.setProperty('--film-mask', `linear-gradient(to bottom, ${featherStops.join(',')})`);
   identity.style.opacity = reducedMotion.matches || titleRevealed ? '1' : '0';
+  identity.inert = !(reducedMotion.matches || titleRevealed);
   // Stop cycling as the rising film reaches the lower edge of the title.
   // Use the Helvetica line height so changing fonts cannot toggle this boundary.
   const titleBottom = screenHeight * .5 + window.innerWidth * nameFontSize / 100 * 1.05 / 2;

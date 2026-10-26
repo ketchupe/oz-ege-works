@@ -2,6 +2,7 @@
 // Keep the quotes. JPG, PNG, WebP and SVG all work. No server is needed.
 window.portfolioImages = {
   analytics: {
+    privacyFadeScreens: 0.6, // Fade over the last fraction of a viewport before the opening ends.
     sectionUpdates: true,
     sectionDwellSeconds: 2, // Section must occupy the screen centre for this long.
     sectionCooldownSeconds: 10, // Minimum gap between section messages; latest section wins.
@@ -10,8 +11,8 @@ window.portfolioImages = {
     reportSeconds: 60, // Minimum 30 seconds between periodic summaries.
     idleSeconds: 60, // Stop counting active time after this many seconds without interaction.
     visitorIdDays: 30, // Remember this consenting browser for up to this many days (1–365).
-    title: 'Optional analytics',
-    notice: 'Allow: pages, areas, active time, scroll depth, clicks, approximate country and device, with a random browser ID saved for {days} days to recognise returns. Anonymize: area and usage reports without visitor IDs, country or device; returning visits cannot be linked. Reports pass through Cloudflare to a private Discord channel. Cloudflare still processes connection IPs; raw IPs are not sent to Discord. Preferences use local storage, not cookies. Declining does not affect the site.',
+    title: 'Information may include your activity and IP addresses.',
+    notice: 'Allow: your IP address is sent to my private Discord channel along with pages, areas, active time, scroll depth, clicks, approximate country and device, with a random browser ID saved for {days} days to recognise returns. Anonymize: area and usage reports without IP addresses, visitor IDs, country or device; returning visits cannot be linked. Reports pass through Cloudflare to a private Discord channel. Cloudflare still processes connection IPs in both modes. Preferences use local storage, not cookies. Declining does not affect the site.',
     allowText: 'Allow',
     anonymizeText: 'Anonymize',
     detailsText: 'More details',
