@@ -16,6 +16,8 @@
   let anonymous = false, anonymousTotals = {seconds:0,areas:{},clicks:{}};
   let explicitAllow = false;
   const device = /ipad|tablet/i.test(navigator.userAgent) ? 'tablet' : /mobi/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
+  const ua = navigator.userAgent;
+  const browserName = /Edg/i.test(ua) ? 'Edge' : /OPR|Opera/i.test(ua) ? 'Opera' : /Firefox|FxiOS/i.test(ua) ? 'Firefox' : /Chrome|CriOS/i.test(ua) ? 'Chrome' : /Safari/i.test(ua) ? 'Safari' : 'Other';
   const panel = document.createElement('section'); panel.className = 'visit-consent'; panel.setAttribute('aria-label', c.title);
   const heading = document.createElement('h2'); heading.textContent = c.title;
   const shortNotice = document.createElement('p'); shortNotice.className = 'visit-small-print'; shortNotice.textContent = c.shortNotice || '';
@@ -50,7 +52,7 @@
     if (anonymous) {
       try { localStorage.removeItem(visitorKey); sessionStorage.removeItem(visitKey); } catch {}
       visit = visitor = pageLoad = undefined;
-      allowed = true; dirty = true; report(); return;
+      allowed = true; dirty = true; report(c.arrivalUpdates === false ? 'visit_summary' : 'visit_start'); return;
     }
     let browser, session;
     try { browser = JSON.parse(get('localStorage',visitorKey)); } catch {}
@@ -59,12 +61,13 @@
     if (!existing) browser = {id:crypto.randomUUID(),expires:Date.now()+days*86400000};
     visitor = browser.id;
     // One visit per tab session; a 30-minute inactivity gap starts another visit.
-    if (!session || session.visitor !== visitor || !uuid(session.id) || Date.now()-session.last > 1800000) {
+    const newVisit = !session || session.visitor !== visitor || !uuid(session.id) || Date.now()-session.last > 1800000;
+    if (newVisit) {
       session = {id:crypto.randomUUID(),visitor,returning:Boolean(existing),last:Date.now()};
     }
     visit = session.id; returning = Boolean(session.returning); pageLoad = crypto.randomUUID();
     put('localStorage',visitorKey,JSON.stringify(browser)); put('sessionStorage',visitKey,JSON.stringify(session));
-    allowed = true; dirty = true; report();
+    allowed = true; dirty = true; report(newVisit && c.arrivalUpdates !== false ? 'visit_start' : 'visit_summary');
   }
   function choose(value) {
     allowed = false; reset(); put('localStorage',key,value); panel.hidden = true;
@@ -119,10 +122,11 @@
         if (!response.ok) console.warn('Portfolio analytics delivery failed:',response.status,'Check the active Cloudflare Worker version and bindings.');
       }).catch(()=>{ window.portfolioAnalyticsStatus = {state:'network-error',event:payload.event}; });
   }
-  function report() {
+  function report(event = 'visit_summary') {
+    if (event !== 'visit_start') event = 'visit_summary'; // pagehide passes an Event object.
     if (!allowed || !dirty) return;
     if (!anonymous) put('sessionStorage',visitKey,JSON.stringify({id:visit,visitor,returning,last:Date.now()}));
-    const payload = {event:'visit_summary',target:page,visit,visitor,returning,pageLoad,sequence:++sequence,device,seconds:Math.round(seconds),depth,
+    const payload = {event,target:page,visit,visitor,returning,pageLoad,sequence:++sequence,device,browser:browserName,seconds:Math.round(seconds),depth,
       areas:Object.fromEntries(Object.entries(areaTimes).map(([k,v])=>[k,Math.round(v)])),clicks};
     dirty = false;
     send(payload);

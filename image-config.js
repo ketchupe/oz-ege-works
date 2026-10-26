@@ -2,6 +2,7 @@
 // Keep the quotes. JPG, PNG, WebP and SVG all work. No server is needed.
 window.portfolioImages = {
   analytics: {
+    arrivalUpdates: true, // Send a separate message when a new tab visit starts (not every page reload).
     defaultAllow: true, // Start analytics unless the visitor has opted out; IP sharing requires clicking Allow.
     privacyFadeScreens: 0.6, // Fade out over this many screen heights of scrolling from the top.
     sectionUpdates: true,
